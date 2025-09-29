@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>漫画实时翻译工具</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #preview { max-width: 90%; margin-top: 20px; border: 1px solid #ccc; }
+    textarea, input { width: 90%; margin: 10px 0; padding: 8px; }
+    button { padding: 10px 20px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>漫画实时翻译工具</h1>
+
+  <p>输入你的 <b>Gemini API Key</b>：</p>
+  <input id="apiKey" type="password" placeholder="在这里粘贴 API Key">
+
+  <p>上传漫画图片：</p>
+  <input id="imageInput" type="file" accept="image/*">
+
+  <br>
+  <button onclick="translateImage()">翻译图片</button>
+
+  <div>
+    <h3>结果预览：</h3>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    async function translateImage() {
+      const apiKey = document.getElementById("apiKey").value;
+      const fileInput = document.getElementById("imageInput").files[0];
+      if (!apiKey || !fileInput) {
+        alert("请先输入 API Key 并上传图片");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const img = new Image();
+        img.onload = async function() {
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const base64Image = e.target.result.split(",")[1];
+          const response = await fetch("/api/proxy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              apiKey: apiKey,
+              body: {
+                contents: [{
+                  parts: [
+                    { text: "请逐字逐句翻译这张漫画里的日语对白为中文，保持意思自然。" },
+                    { inline_data: { mime_type: "image/png", data: base64Image } }
+                  ]
+                }]
+              }
+            })
+          });
+
+          const data = await response.json();
+          console.log(data);
+
+          try {
+            const translated = data.candidates[0].content.parts[0].text;
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
+            ctx.fillRect(10, 10, canvas.width - 20, 150);
+            ctx.fillStyle = "black";
+            ctx.font = "20px sans-serif";
+            ctx.fillText(translated, 20, 40);
+          } catch (err) {
+            alert("翻译失败，请检查 API Key 或重试");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(fileInput);
+    }
+  </script>
+</body>
+</html>
