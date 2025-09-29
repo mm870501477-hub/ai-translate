@@ -1,5 +1,5 @@
 {
-  "name": "manga-translator",
+  "name": "ai-translate",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -8,10 +8,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "multer": "^1.4.5",
-    "sqlite3": "^5.1.6",
-    "bcrypt": "^5.1.0",
-    "body-parser": "^1.20.2",
-    "node-fetch": "^3.3.2",
-    "tesseract.js": "^4.0.2"
+    "body-parser": "^1.20.2"
   }
 }
